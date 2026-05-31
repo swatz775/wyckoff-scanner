@@ -684,13 +684,21 @@ def load_email_config():
     cfg.setdefault("smtp_host", "smtp.gmail.com")
     cfg.setdefault("smtp_port", 587)
     cfg.setdefault("min_score", 80)
+
+    def _env(name, default):
+        # Treat unset AND empty-string env vars as absent. GitHub Actions injects
+        # an empty string for secrets that don't exist, so a plain .get(name,
+        # default) would return "" and shadow the default.
+        v = os.environ.get(name)
+        return v if v not in (None, "") else default
+
     # Env overrides (used in cloud deployments where there is no config file)
-    cfg["smtp_host"]    = os.environ.get("WYCKOFF_SMTP_HOST",      cfg["smtp_host"])
-    cfg["smtp_port"]    = os.environ.get("WYCKOFF_SMTP_PORT",      cfg["smtp_port"])
-    cfg["sender"]       = os.environ.get("WYCKOFF_SMTP_SENDER",    cfg.get("sender", ""))
-    cfg["app_password"] = os.environ.get("WYCKOFF_SMTP_PASSWORD",  cfg.get("app_password", ""))
-    cfg["recipient"]    = os.environ.get("WYCKOFF_SMTP_RECIPIENT", cfg.get("recipient", cfg.get("sender", "")))
-    cfg["min_score"]    = int(os.environ.get("WYCKOFF_MIN_SCORE",  cfg["min_score"]))
+    cfg["smtp_host"]    = _env("WYCKOFF_SMTP_HOST",      cfg["smtp_host"])
+    cfg["smtp_port"]    = _env("WYCKOFF_SMTP_PORT",      cfg["smtp_port"])
+    cfg["sender"]       = _env("WYCKOFF_SMTP_SENDER",    cfg.get("sender", ""))
+    cfg["app_password"] = _env("WYCKOFF_SMTP_PASSWORD",  cfg.get("app_password", ""))
+    cfg["recipient"]    = _env("WYCKOFF_SMTP_RECIPIENT", cfg.get("recipient", cfg.get("sender", "")))
+    cfg["min_score"]    = int(_env("WYCKOFF_MIN_SCORE",  cfg["min_score"]))
     return cfg
 
 
