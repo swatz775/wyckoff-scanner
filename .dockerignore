@@ -1,0 +1,9 @@
+.git
+__pycache__/
+*.pyc
+email_config.json
+wyckoff_scanner.html
+daily_run.log
+run_daily.cmd
+setup_schedule.ps1
+*.md

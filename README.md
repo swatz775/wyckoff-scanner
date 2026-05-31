@@ -62,6 +62,13 @@ The scan takes ~10–15 minutes and auto-opens `wyckoff_scanner.html`.
    powershell -ExecutionPolicy Bypass -File setup_schedule.ps1
    ```
 
+### Run it in the cloud instead (recommended)
+
+To run the daily scan **without keeping your PC on**, deploy to Google Cloud as a
+Cloud Run Job triggered by Cloud Scheduler — see **[DEPLOY_GCLOUD.md](DEPLOY_GCLOUD.md)**.
+No local Docker required; the image builds from source via Cloud Build. Credentials
+are supplied through `WYCKOFF_SMTP_*` environment variables / Secret Manager.
+
 `email_config.json` is gitignored so your app password is never committed. You can
 instead supply credentials via the `WYCKOFF_SMTP_SENDER`, `WYCKOFF_SMTP_PASSWORD`,
 and `WYCKOFF_SMTP_RECIPIENT` environment variables.

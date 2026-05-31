@@ -684,10 +684,13 @@ def load_email_config():
     cfg.setdefault("smtp_host", "smtp.gmail.com")
     cfg.setdefault("smtp_port", 587)
     cfg.setdefault("min_score", 80)
-    # Env overrides
+    # Env overrides (used in cloud deployments where there is no config file)
+    cfg["smtp_host"]    = os.environ.get("WYCKOFF_SMTP_HOST",      cfg["smtp_host"])
+    cfg["smtp_port"]    = os.environ.get("WYCKOFF_SMTP_PORT",      cfg["smtp_port"])
     cfg["sender"]       = os.environ.get("WYCKOFF_SMTP_SENDER",    cfg.get("sender", ""))
     cfg["app_password"] = os.environ.get("WYCKOFF_SMTP_PASSWORD",  cfg.get("app_password", ""))
     cfg["recipient"]    = os.environ.get("WYCKOFF_SMTP_RECIPIENT", cfg.get("recipient", cfg.get("sender", "")))
+    cfg["min_score"]    = int(os.environ.get("WYCKOFF_MIN_SCORE",  cfg["min_score"]))
     return cfg
 
 
