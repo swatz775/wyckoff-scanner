@@ -1,0 +1,64 @@
+name: Daily Wyckoff Scan
+
+# Runs the scanner in the cloud and emails setups scoring 80+ at 6 PM Central.
+#
+# GitHub Actions cron is UTC-only with no DST handling. 6 PM Central is 23:00 UTC
+# during CDT (summer) and 00:00 UTC during CST (winter). We trigger at BOTH times
+# and a gate job only lets the scan proceed when it is actually 18:00 in
+# America/Chicago — giving exactly 6 PM Central year-round.
+on:
+  schedule:
+    - cron: "0 23 * * *"   # 6 PM CDT (summer)
+    - cron: "0 0 * * *"    # 6 PM CST (winter)
+  workflow_dispatch: {}     # manual "Run workflow" button (bypasses the time gate)
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run: |
+          HOUR=$(TZ=America/Chicago date +%H)
+          echo "Current America/Chicago hour: $HOUR"
+          if [ "$HOUR" = "18" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false (not 6 PM Central) — skipping scan" >> "$GITHUB_OUTPUT"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  scan:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scan and email alerts
+        env:
+          WYCKOFF_SMTP_HOST: ${{ secrets.WYCKOFF_SMTP_HOST }}
+          WYCKOFF_SMTP_PORT: ${{ secrets.WYCKOFF_SMTP_PORT }}
+          WYCKOFF_SMTP_SENDER: ${{ secrets.WYCKOFF_SMTP_SENDER }}
+          WYCKOFF_SMTP_PASSWORD: ${{ secrets.WYCKOFF_SMTP_PASSWORD }}
+          WYCKOFF_SMTP_RECIPIENT: ${{ secrets.WYCKOFF_SMTP_RECIPIENT }}
+          WYCKOFF_MIN_SCORE: "80"
+        run: python scanner.py --email
+
+      - name: Upload HTML report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wyckoff-report
+          path: wyckoff_scanner.html
+          if-no-files-found: ignore

@@ -64,10 +64,25 @@ The scan takes ~10–15 minutes and auto-opens `wyckoff_scanner.html`.
 
 ### Run it in the cloud instead (recommended)
 
-To run the daily scan **without keeping your PC on**, deploy to Google Cloud as a
-Cloud Run Job triggered by Cloud Scheduler — see **[DEPLOY_GCLOUD.md](DEPLOY_GCLOUD.md)**.
-No local Docker required; the image builds from source via Cloud Build. Credentials
-are supplied through `WYCKOFF_SMTP_*` environment variables / Secret Manager.
+To run the daily scan **without keeping your PC on**, use the included GitHub
+Actions workflow — free, automatic, and no billing card required.
+
+**Setup:** in your repo on GitHub, go to **Settings → Secrets and variables →
+Actions → New repository secret** and add:
+
+| Secret | Value |
+|--------|-------|
+| `WYCKOFF_SMTP_SENDER` | your Gmail address |
+| `WYCKOFF_SMTP_PASSWORD` | your Gmail App Password |
+| `WYCKOFF_SMTP_RECIPIENT` | where to send alerts |
+
+That's it. [`.github/workflows/daily-scan.yml`](.github/workflows/daily-scan.yml)
+runs the scan and emails setups scoring 80+ **daily at 6 PM US Central**
+(handled correctly across daylight saving). Use the **Actions** tab → *Daily
+Wyckoff Scan* → *Run workflow* to trigger a test run anytime.
+
+> Prefer Google Cloud Run instead? See **[DEPLOY_GCLOUD.md](DEPLOY_GCLOUD.md)**
+> (fully automatic, free tier, but requires enabling billing and the gcloud CLI).
 
 `email_config.json` is gitignored so your app password is never committed. You can
 instead supply credentials via the `WYCKOFF_SMTP_SENDER`, `WYCKOFF_SMTP_PASSWORD`,
