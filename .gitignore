@@ -1,0 +1,11 @@
+# Secrets — never commit real SMTP credentials
+email_config.json
+
+# Generated report
+wyckoff_scanner.html
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
