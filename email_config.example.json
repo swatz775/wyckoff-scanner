@@ -1,0 +1,8 @@
+{
+  "smtp_host": "smtp.gmail.com",
+  "smtp_port": 587,
+  "sender": "your_address@gmail.com",
+  "app_password": "your-16-char-gmail-app-password",
+  "recipient": "where_to_send@gmail.com",
+  "min_score": 80
+}
