@@ -1,37 +1,21 @@
 name: Daily Wyckoff Scan
 
-# Runs the scanner in the cloud and emails setups scoring 80+ at 6 PM Central.
+# Runs the scanner once a day and emails setups scoring 80+.
 #
-# GitHub Actions cron is UTC-only with no DST handling. 6 PM Central is 23:00 UTC
-# during CDT (summer) and 00:00 UTC during CST (winter). We trigger at BOTH times
-# and a gate job only lets the scan proceed when it is actually 18:00 in
-# America/Chicago — giving exactly 6 PM Central year-round.
+# NOTE ON TIMING: GitHub Actions cron is UTC-only and best-effort — runs can be
+# delayed (sometimes by an hour or more) and don't fire at an exact minute. We
+# target 23:00 UTC = 6 PM US Central during daylight time (CDT). During standard
+# time (CST, winter) this lands at 5 PM Central. We deliberately do NOT gate on
+# the exact local hour, because GitHub's off-schedule firing would then skip the
+# run entirely. Reliability (always sends) is preferred over exact timing.
+# For to-the-minute scheduling, use Google Cloud Scheduler (see DEPLOY_GCLOUD.md).
 on:
   schedule:
-    - cron: "0 23 * * *"   # 6 PM CDT (summer)
-    - cron: "0 0 * * *"    # 6 PM CST (winter)
-  workflow_dispatch: {}     # manual "Run workflow" button (bypasses the time gate)
+    - cron: "0 23 * * *"   # ~6 PM US Central (CDT); ~5 PM during CST
+  workflow_dispatch: {}     # manual "Run workflow" button, any time
 
 jobs:
-  gate:
-    runs-on: ubuntu-latest
-    outputs:
-      run: ${{ steps.check.outputs.run }}
-    steps:
-      - id: check
-        run: |
-          HOUR=$(TZ=America/Chicago date +%H)
-          echo "Current America/Chicago hour: $HOUR"
-          if [ "$HOUR" = "18" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=false (not 6 PM Central) — skipping scan" >> "$GITHUB_OUTPUT"
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          fi
-
   scan:
-    needs: gate
-    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
