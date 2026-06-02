@@ -14,10 +14,18 @@ on:
     - cron: "0 23 * * *"   # ~6 PM US Central (CDT); ~5 PM during CST
   workflow_dispatch: {}     # manual "Run workflow" button, any time
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   scan:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -46,3 +54,18 @@ jobs:
           name: wyckoff-report
           path: wyckoff_scanner.html
           if-no-files-found: ignore
+
+      # Publish the dashboard to GitHub Pages as index.html
+      - name: Prepare Pages site
+        run: |
+          mkdir -p _site
+          cp wyckoff_scanner.html _site/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
