@@ -1,18 +1,14 @@
 name: Daily Wyckoff Scan
 
-# Runs the scanner once a day and emails setups scoring 80+.
+# Runs the scanner and emails setups scoring 80+.
 #
-# NOTE ON TIMING: GitHub Actions cron is UTC-only and best-effort — runs can be
-# delayed (sometimes by an hour or more) and don't fire at an exact minute. We
-# target 23:00 UTC = 6 PM US Central during daylight time (CDT). During standard
-# time (CST, winter) this lands at 5 PM Central. We deliberately do NOT gate on
-# the exact local hour, because GitHub's off-schedule firing would then skip the
-# run entirely. Reliability (always sends) is preferred over exact timing.
-# For to-the-minute scheduling, use Google Cloud Scheduler (see DEPLOY_GCLOUD.md).
+# TIMING: GitHub Actions' built-in `schedule` cron proved unreliable on the free
+# tier — it fired hours off-schedule at random times. So scheduling is handled
+# EXTERNALLY by cron-job.org, which calls this workflow's workflow_dispatch API
+# at exactly 6 PM America/Chicago. See EXTERNAL_TRIGGER.md for setup. This file
+# only exposes workflow_dispatch (manual button + external trigger).
 on:
-  schedule:
-    - cron: "0 23 * * *"   # ~6 PM US Central (CDT); ~5 PM during CST
-  workflow_dispatch: {}     # manual "Run workflow" button, any time
+  workflow_dispatch: {}     # manual "Run workflow" button + external cron trigger
 
 permissions:
   contents: read
